@@ -1,5 +1,9 @@
+import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
+// https://vite.dev/config/
 export default defineConfig({
-  base: '/Mini-erp-frontend-SantiagoArrua/'
+  plugins: [react()],
+  base: '/Mini-erp-frontend-SantiagoArrua/',
 })
+ 
