@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import './App.css';
 
@@ -11,87 +12,157 @@ function App() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
     setError('');
     setLoading(true);
 
     try {
-      const response = await fetch('https://fakestoreapi.com/auth/login', {
+      const response = await fetch('https://dummyjson.com/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          username: email, 
-          password: password 
-        }),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: email,
+          password: password
+        })
       });
 
-      if (!response.ok) throw new Error('Credenciales invalidas');
+      if (!response.ok) {
+        throw new Error('Credenciales inválidas');
+      }
 
       const data = await response.json();
-      if (data.token) {
-        setToken(data.token);
-        fetchProducts();
+
+      if (data.accessToken) {
+        setToken(data.accessToken);
+        fetchProducts(data.accessToken);
       } else {
-        setError('Credenciales inválidas');
+        setError('No se pudo iniciar sesión');
       }
+
     } catch (err) {
-      setToken('token-de-prueba');
-      fetchProducts();
+      setError('Usuario o contraseña incorrectos');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (accessToken) => {
     try {
-      const response = await fetch('https://fakestoreapi.com/products?limit=5');
+      const response = await fetch(
+        'https://dummyjson.com/products?limit=5',
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Error al obtener productos');
+      }
+
       const data = await response.json();
-      setProducts(data);
+
+      setProducts(data.products);
+
     } catch (err) {
-      setProducts([
-        { id: 1, title: 'Compu Victus pro max', price: 1200000 },
-        { id: 2, title: 'Compu MSI pro 18', price: 180000 },
-        { id: 3, title: 'IPhone 19 pro ultra max', price: 300000 },
-      ]);
+      setError('No se pudieron cargar los productos');
     }
   };
 
+  const cerrarSesion = () => {
+    setToken(null);
+    setProducts([]);
+    setEmail('');
+    setPassword('');
+    setError('');
+  };
+
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
+    <div
+      style={{
+        padding: '20px',
+        fontFamily: 'sans-serif'
+      }}
+    >
       <h1>Mini ERP - Gestión de Productos</h1>
 
       {!token ? (
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '320px', margin: '0 auto' }}>
+        <form
+          onSubmit={handleLogin}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
+            maxWidth: '320px',
+            margin: '0 auto'
+          }}
+        >
           <h3>Iniciar Sesión</h3>
-          <input 
-            type="text" 
-            placeholder="Email o Correo" 
-            value={email} 
+
+          <input
+            type="text"
+            placeholder="Usuario"
+            value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required 
+            required
           />
-          <input 
-            type="password" 
-            placeholder="Contraseña" 
-            value={password} 
+
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required 
+            required
           />
-          <button type="submit" disabled={loading}>
+
+          <button
+            type="submit"
+            disabled={loading}
+          >
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
+
+          {error && (
+            <p style={{ color: 'red' }}>
+              {error}
+            </p>
+          )}
         </form>
       ) : (
         <div>
           <h3>Lista de Productos del ERP</h3>
-          <ul style={{ textAlign: 'left', maxWidth: '400px', margin: '0 auto 20px auto' }}>
-            {products.map(p => (
-              <li key={p.id} style={{ marginBottom: '8px' }}>
-                <strong>{p.title || p.name}</strong> - ${p.price}
-              </li>
-            ))}
-          </ul>
-          <button onClick={() => { setToken(null); setProducts([]); }}>Cerrar Sesión</button>
+
+          {products.length === 0 ? (
+            <p>Cargando productos...</p>
+          ) : (
+            <ul
+              style={{
+                textAlign: 'left',
+                maxWidth: '500px',
+                margin: '0 auto 20px auto'
+              }}
+            >
+              {products.map((p) => (
+                <li
+                  key={p.id}
+                  style={{
+                    marginBottom: '10px'
+                  }}
+                >
+                  <strong>{p.title}</strong>
+                  {' - '}
+                  ${p.price}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <button onClick={cerrarSesion}>
+            Cerrar Sesión
+          </button>
         </div>
       )}
     </div>
